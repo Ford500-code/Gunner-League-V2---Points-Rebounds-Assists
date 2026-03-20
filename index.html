@@ -144,6 +144,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   <div class="cards" id="summaryCards"></div>
   <div id="liveGamesSection"></div>
   <div class="mb36" id="chartSection"></div>
+  <div class="mb36" id="activePlayersSection"></div>
   <div class="mb36" id="leaderboardSection"></div>
   <div class="mb36" id="topPlayersSection"></div>
   <div style="margin-bottom:40px" id="draftValueSection"></div>
@@ -153,17 +154,17 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <script>
 // ─── DATA ──────────────────────────────────────────────────────────────────────
 const OWNERS=[
-{name:"Hillz",players:[{n:"Cam Boozer",s:"Duke",r:1},{n:"Tre White",s:"Kansas",r:2},{n:"Motiejus Krivas",s:"Arizona",r:3},{n:"Trey McKenney",s:"Michigan",r:4},{n:"Urban Klavzar",s:"Florida",r:5},{n:"Tobe Awaka",s:"Arizona",r:6},{n:"Nimari Burnett",s:"Michigan",r:7},{n:"C.J. Cox",s:"Purdue",r:8},{n:"Acaden Lewis",s:"Villanova",r:9},{n:"Robbie Avila",s:"Saint Louis",r:10}]},
-{name:"Turner",players:[{n:"Adou Thiero",s:"Arkansas",r:1,a:["Acuff"]},{n:"Braden Smith",s:"Purdue",r:2,a:["Smith"]},{n:"Walter Clayton Jr.",s:"Florida",r:3,a:["Fland"]},{n:"Liam McNeeley",s:"UConn",r:4,a:["Mullens"]},{n:"Kasparas Jakucionis",s:"Illinois",r:5,a:["Boswell"]},{n:"Darrion Williams",s:"Texas Tech",r:6,a:["Anderson"]},{n:"Mark Sears",s:"Alabama",r:7,a:["Wrightsell"]},{n:"Tyler Nickel",s:"Vanderbilt",r:8},{n:"Daniels",s:"Cal Baptist",r:9},{n:"Pierre",s:"SMU",r:10}]},
-{name:"Bradford",players:[{n:"Caleb Love",s:"Arizona",r:1,a:["Burries"]},{n:"Cayden Boozer",s:"Duke",r:2},{n:"Danny Wolf",s:"Michigan",r:3,a:["Mara"]},{n:"Alex Condon",s:"Florida",r:4,a:["Chinyelu"]},{n:"Tyler Tanner",s:"Vanderbilt",r:5},{n:"Ryan Dunn",s:"Virginia",r:6,a:["Thomas"]},{n:"Jaxson Robinson",s:"Kentucky",r:7,a:["Oweh"]},{n:"Isaac McKneely",s:"Virginia",r:8,a:["Mallory"]},{n:"Miller",s:"SMU",r:9},{n:"Hill Jr",s:"VCU",r:10}]},
-{name:"Berto",players:[{n:"Isaiah Evans",s:"Duke",r:1},{n:"Zakai Zeigler",s:"Tennessee",r:2,a:["Gillispie"]},{n:"Nate Ament",s:"Tennessee",r:3},{n:"Trey Kaufman-Renn",s:"Purdue",r:4,a:["Kaufman Renn"]},{n:"Pryce Sandfort",s:"Nebraska",r:5},{n:"Johnell Davis",s:"Arkansas",r:6,a:["Brazile"]},{n:"Bryce Hopkins",s:"St. John's",r:7},{n:"Swain",s:"Texas",r:8},{n:"Tavari Johnson",s:"Akron",r:9},{n:"Jordan Pope",s:"Texas",r:10}]},
-{name:"Sam",players:[{n:"Jalen Bridges",s:"Arizona",r:1,a:["Bradley"]},{n:"Dajuan Harris Jr.",s:"Kansas",r:2,a:["Peterson"]},{n:"Anthony Dell'Orso",s:"Arizona",r:3,a:["Dell Orso"]},{n:"Alex Karaban",s:"UConn",r:4,a:["Ball"]},{n:"Milos Uzan",s:"Houston",r:5,a:["Cenac"]},{n:"Andrew Mast",s:"Nebraska",r:6},{n:"Shakeel Moore",s:"Kansas",r:7,a:["Council"]},{n:"Richie Saunders",s:"BYU",r:8,a:["Wright"]},{n:"Falslev",s:"Utah State",r:9},{n:"Stone",s:"Missouri",r:10}]},
-{name:"Gosh",players:[{n:"Alex Haugh",s:"Florida",r:1},{n:"Henri Veesaar",s:"Arizona",r:2,a:["Peat"]},{n:"Xaivian Lee",s:"Florida",r:3},{n:"Uzan",s:"Houston",r:4},{n:"Tomislav Ivisic",s:"Illinois",r:5,a:["Mirkovic"]},{n:"T. Ivisic",s:"Illinois",r:6},{n:"Graham Ike",s:"Gonzaga",r:7,a:["Grant-Foster"]},{n:"RJ Luis Jr.",s:"St. John's",r:8,a:["Sellers"]},{n:"Collins Jr.",s:"Utah State",r:9},{n:"Micah Parrish",s:"Ohio State",r:10,a:["Mobley Jr."]}]},
-{name:"Lee",players:[{n:"Curtis Jones",s:"Iowa State",r:1,a:["Mommacilovic"]},{n:"Mark Sears",s:"Alabama",r:2,a:["Philon"]},{n:"Fletcher Loyer",s:"Purdue",r:3},{n:"Ryan Dunn",s:"Virginia",r:4,a:["De Ridder"]},{n:"Alex Karaban",s:"UConn",r:5,a:["Karaban"]},{n:"Tyler Miles",s:"Vanderbilt",r:6},{n:"Reyne Smith",s:"Louisville",r:7,a:["Conwell"]},{n:"Emanuel Sharp",s:"Houston",r:8,a:["Tugler"]},{n:"Brock Harding",s:"Iowa",r:9,a:["Stirtz"]},{n:"Devin Royal",s:"Ohio State",r:10}]},
-{name:"Moyer",players:[{n:"Vladislav Goldin",s:"Michigan",r:1,a:["Lendeborg"]},{n:"Tre Johnson",s:"Michigan",r:2,a:["Johnson Jr."]},{n:"Tomáš Woldetensae",s:"Illinois",r:3,a:["Stojakovic"]},{n:"Roddy Gayle Jr.",s:"Michigan",r:4,a:["Cadeau"]},{n:"Camden Heide",s:"Purdue",r:5,a:["Cluff"]},{n:"Jase Richardson",s:"Michigan State",r:6,a:["Cooper"]},{n:"Lewis",s:"Virginia",r:7},{n:"Jaden Akins",s:"Michigan State",r:8,a:["Teng"]},{n:"Larry Johnson",s:"McNeese",r:9},{n:"Terry Anderson",s:"High Point",r:10}]},
-{name:"Matt",players:[{n:"Keaton Wagler",s:"Illinois",r:1},{n:"Tamin Lipsey",s:"Iowa State",r:2},{n:"AJ Dybantsa",s:"BYU",r:3},{n:"Meleek Thomas",s:"Arkansas",r:4},{n:"Nick Boyd",s:"Wisconsin",r:5},{n:"Zuby Ejiofor",s:"St. John's",r:6},{n:"Malik Reneau",s:"Miami",r:7},{n:"Billy Richmond",s:"Arkansas",r:8},{n:"Jeremiah Wilkinson",s:"Georgia",r:9},{n:"Wes Enis",s:"South Florida",r:10}]},
-{name:"Graham",players:[{n:"Alex Condon",s:"Florida",r:1},{n:"Josh Jefferson",s:"Iowa State",r:2},{n:"Graham Ike",s:"Gonzaga",r:3},{n:"Tarris Reed Jr.",s:"UConn",r:4,a:["Tarris Reed"]},{n:"John Blackwell",s:"Wisconsin",r:5},{n:"Patrick Ngongba II",s:"Duke",r:6,a:["Patrick Ngongba"]},{n:"Flory Bidunga",s:"Kansas",r:7},{n:"Amari Allen",s:"Alabama",r:8},{n:"Bruce Thornton",s:"Ohio State",r:9},{n:"Izaiyah Nelson",s:"South Florida",r:10}]},
-{name:"Kagan",players:[{n:"J'Wan Roberts",s:"Houston",r:1,a:["Flemings"]},{n:"Emanuel Sharp",s:"Houston",r:2},{n:"Kharchenkov",s:"Arizona",r:3},{n:"Jase Richardson",s:"Michigan State",r:4,a:["Fears"]},{n:"Jaxon Kohler",s:"Michigan State",r:5},{n:"Coen Carr",s:"Michigan State",r:6},{n:"Atwell",s:"Texas Tech",r:7},{n:"Milan Momcilovic",s:"Iowa State",r:8,a:["Buchanan"]},{n:"Mark Mitchell",s:"Missouri",r:9},{n:"T Fulks",s:"UCF",r:10}]}
+{name:"Hillz",players:[{n:"Cameron Boozer",s:"Duke",r:1,a:["Cam Boozer"]},{n:"Tre White",s:"Kansas",r:2},{n:"Motiejus Krivas",s:"Arizona",r:3,a:["Krivas"]},{n:"Trey McKenney",s:"Michigan",r:4,a:["Trey McKinney"]},{n:"Urban Klavzar",s:"Florida",r:5},{n:"Tobe Awaka",s:"Arizona",r:6},{n:"Nimari Burnett",s:"Michigan",r:7},{n:"C.J. Cox",s:"Purdue",r:8,a:["CJ Cox"]},{n:"Acaden Lewis",s:"Villanova",r:9},{n:"Robbie Avila",s:"Saint Louis",r:10,a:["Cream Avila"]}]},
+{name:"Turner",players:[{n:"Darius Acuff Jr.",s:"Arkansas",r:1,a:["Acuff","Darius Acuff"]},{n:"Braden Smith",s:"Purdue",r:2,a:["Smith"]},{n:"Boogie Fland",s:"Florida",r:3},{n:"Braylon Mullins",s:"UConn",r:4,a:["Mullens"]},{n:"Kylan Boswell",s:"Illinois",r:5,a:["Boswell"]},{n:"Christian Anderson",s:"Texas Tech",r:6,a:["Anderson"]},{n:"Latrell Wrightsell",s:"Alabama",r:7,a:["Wrightsell","Latrell Wrightsell Jr."]},{n:"Tyler Nickel",s:"Vanderbilt",r:8,a:["Nickel"]},{n:"Dominique Daniels Jr.",s:"Cal Baptist",r:9,a:["Daniels","Dominique Daniels"]},{n:"Jaron Pierre Jr.",s:"SMU",r:10,a:["Pierre","Jaron Pierre"]}]},
+{name:"Bradford",players:[{n:"Brayden Burries",s:"Arizona",r:1,a:["Burries"]},{n:"Cayden Boozer",s:"Duke",r:2},{n:"Aday Mara",s:"Michigan",r:3,a:["Mara"]},{n:"Reuben Chinyelu",s:"Florida",r:4,a:["Chinyelu"]},{n:"Tyler Tanner",s:"Vanderbilt",r:5,a:["Tanner"]},{n:"Malik Thomas",s:"Virginia",r:6,a:["Thomas"]},{n:"Otega Oweh",s:"Kentucky",r:7,a:["Oweh"]},{n:"Chance Mallory",s:"Virginia",r:8,a:["Mallory"]},{n:"Boopie Miller",s:"SMU",r:9,a:["Miller"]},{n:"Terrence Hill Jr.",s:"VCU",r:10,a:["Hill Jr","Terrence Hill"]}]},
+{name:"Berto",players:[{n:"Isaiah Evans",s:"Duke",r:1,a:["Isiah Evans"]},{n:"Ja'Kobi Gillespie",s:"Tennessee",r:2,a:["Gillispie","Gillespie"]},{n:"Nate Ament",s:"Tennessee",r:3},{n:"Trey Kaufman-Renn",s:"Purdue",r:4,a:["Kaufman Renn","Kaufman-Renn"]},{n:"Pryce Sandfort",s:"Nebraska",r:5,a:["Sandfort"]},{n:"Trevon Brazile",s:"Arkansas",r:6,a:["Brazile"]},{n:"Bryce Hopkins",s:"St. John's",r:7},{n:"Dailyn Swain",s:"Texas",r:8,a:["Swain"]},{n:"Tavari Johnson",s:"Akron",r:9},{n:"Jordan Pope",s:"Texas",r:10}]},
+{name:"Sam",players:[{n:"Jaden Bradley",s:"Arizona",r:1,a:["Bradley"]},{n:"Darryn Peterson",s:"Kansas",r:2,a:["Peterson"]},{n:"Anthony Dell'Orso",s:"Arizona",r:3,a:["Dell Orso"]},{n:"Solo Ball",s:"UConn",r:4},{n:"J'den Cenac",s:"Houston",r:5,a:["Cenac"]},{n:"Andrew Mast",s:"Nebraska",r:6,a:["Mast"]},{n:"Melvin Council Jr.",s:"Kansas",r:7,a:["Council","Melvin Council"]},{n:"Robert Wright III",s:"BYU",r:8,a:["Rob Wright","Robert Wright"]},{n:"Mason Falslev",s:"Utah State",r:9,a:["Falslev"]},{n:"Jayden Stone",s:"Missouri",r:10,a:["Stone"]}]},
+{name:"Gosh",players:[{n:"Thomas Haugh",s:"Florida",r:1,a:["Haugh"]},{n:"Koa Peat",s:"Arizona",r:2,a:["Peat"]},{n:"Xaivian Lee",s:"Florida",r:3},{n:"Milos Uzan",s:"Houston",r:4,a:["Uzan"]},{n:"Nikola Mirkovic",s:"Illinois",r:5,a:["Mirkovic"]},{n:"Tomislav Ivisic",s:"Illinois",r:6,a:["T. Ivisic"]},{n:"Tyon Grant-Foster",s:"Gonzaga",r:7,a:["Grant-Foster"]},{n:"Oziyah Sellers",s:"St. John's",r:8,a:["Sellers"]},{n:"MJ Collins Jr.",s:"Utah State",r:9,a:["Collins Jr.","Collin's Jr."]},{n:"John Mobley Jr.",s:"Ohio State",r:10,a:["Mobley Jr.","John Mobley"]}]},
+{name:"Lee",players:[{n:"Milan Momcilovic",s:"Iowa State",r:1,a:["Mommacilovic"]},{n:"Labaron Philon",s:"Alabama",r:2,a:["Philon","Labaron Philon Jr."]},{n:"Fletcher Loyer",s:"Purdue",r:3,a:["Loyer"]},{n:"Thijs De Ridder",s:"Virginia",r:4,a:["De Ridder"]},{n:"Alex Karaban",s:"UConn",r:5,a:["Karaban"]},{n:"Tyler Miles",s:"Vanderbilt",r:6,a:["Miles"]},{n:"Ryan Conwell",s:"Louisville",r:7,a:["Conwell"]},{n:"Joseph Tugler",s:"Houston",r:8,a:["Tugler"]},{n:"Bennett Stirtz",s:"Iowa",r:9,a:["Stirtz"]},{n:"Devin Royal",s:"Ohio State",r:10,a:["Royal"]}]},
+{name:"Moyer",players:[{n:"Yaxel Lendeborg",s:"Michigan",r:1,a:["Lendeborg"]},{n:"Morez Johnson Jr.",s:"Michigan",r:2,a:["Johnson Jr.","Morez Johnson"]},{n:"Andrej Stojakovic",s:"Illinois",r:3,a:["Stojakovic"]},{n:"Elliot Cadeau",s:"Michigan",r:4,a:["Cadeau"]},{n:"Oscar Cluff",s:"Purdue",r:5,a:["Cluff"]},{n:"Carson Cooper",s:"Michigan State",r:6,a:["Cooper"]},{n:"Sam Lewis",s:"Virginia",r:7,a:["Lewis"]},{n:"Kur Teng",s:"Michigan State",r:8,a:["Teng"]},{n:"Larry Johnson",s:"McNeese",r:9},{n:"Terry Anderson",s:"High Point",r:10}]},
+{name:"Matt",players:[{n:"Keaton Wagler",s:"Illinois",r:1},{n:"Tamin Lipsey",s:"Iowa State",r:2},{n:"AJ Dybantsa",s:"BYU",r:3},{n:"Meleek Thomas",s:"Arkansas",r:4},{n:"Nick Boyd",s:"Wisconsin",r:5},{n:"Zuby Ejiofor",s:"St. John's",r:6,a:["Zuby Eliofor"]},{n:"Malik Reneau",s:"Miami",r:7},{n:"Billy Richmond III",s:"Arkansas",r:8,a:["Billy Richmond"]},{n:"Jeremiah Wilkinson",s:"Georgia",r:9,a:["Jeremiah Wikinson"]},{n:"Wes Enis",s:"South Florida",r:10}]},
+{name:"Graham",players:[{n:"Alex Condon",s:"Florida",r:1},{n:"Joshua Jefferson",s:"Iowa State",r:2,a:["Josh Jefferson"]},{n:"Graham Ike",s:"Gonzaga",r:3},{n:"Tarris Reed Jr.",s:"UConn",r:4,a:["Tarris Reed"]},{n:"John Blackwell",s:"Wisconsin",r:5},{n:"Patrick Ngongba II",s:"Duke",r:6,a:["Patrick Ngongba"]},{n:"Flory Bidunga",s:"Kansas",r:7},{n:"Amari Allen",s:"Alabama",r:8},{n:"Bruce Thornton",s:"Ohio State",r:9},{n:"Izaiyah Nelson",s:"South Florida",r:10}]},
+{name:"Kagan",players:[{n:"Kingston Fleming",s:"Houston",r:1,a:["Flemings"]},{n:"Emanuel Sharp",s:"Houston",r:2,a:["Sharpe"]},{n:"Ivan Kharchenkov",s:"Arizona",r:3,a:["Kharchenkov"]},{n:"Jeremy Fears Jr.",s:"Michigan State",r:4,a:["Fears","Jeremy Fears"]},{n:"Jaxon Kohler",s:"Michigan State",r:5},{n:"Coen Carr",s:"Michigan State",r:6},{n:"Donovan Atwell",s:"Texas Tech",r:7,a:["Atwell"]},{n:"Blake Buchanan",s:"Iowa State",r:8,a:["Buchanan"]},{n:"Mark Mitchell",s:"Missouri",r:9},{n:"Themus Fulks",s:"UCF",r:10,a:["T Fulks"]}]}
 ];
 
 const SA={"Duke":["Duke","Duke Blue Devils"],"Kansas":["Kansas","Kansas Jayhawks"],"Arizona":["Arizona","Arizona Wildcats"],"Michigan":["Michigan","Michigan Wolverines"],"Florida":["Florida","Florida Gators"],"Purdue":["Purdue","Purdue Boilermakers"],"Arkansas":["Arkansas","Arkansas Razorbacks"],"Illinois":["Illinois","Illinois Fighting Illini"],"UConn":["UConn","Connecticut","Connecticut Huskies"],"Texas Tech":["Texas Tech","Texas Tech Red Raiders"],"Alabama":["Alabama","Alabama Crimson Tide"],"Vanderbilt":["Vanderbilt","Vanderbilt Commodores"],"Cal Baptist":["Cal Baptist","California Baptist","California Baptist Lancers"],"SMU":["SMU","SMU Mustangs"],"St. John's":["St. John's","St John's","St. John's Red Storm"],"Texas":["Texas","Texas Longhorns"],"Akron":["Akron","Akron Zips"],"Iowa State":["Iowa State","Iowa St","Iowa State Cyclones"],"Nebraska":["Nebraska","Nebraska Cornhuskers"],"Houston":["Houston","Houston Cougars"],"BYU":["BYU","Brigham Young","BYU Cougars"],"Utah State":["Utah State","Utah St","Utah State Aggies"],"Missouri":["Missouri","Missouri Tigers"],"Ohio State":["Ohio State","Ohio St","Ohio State Buckeyes"],"Virginia":["Virginia","UVA","Virginia Cavaliers"],"Gonzaga":["Gonzaga","Gonzaga Bulldogs"],"Kentucky":["Kentucky","Kentucky Wildcats"],"Michigan State":["Michigan State","Michigan St","MSU","Michigan State Spartans"],"Louisville":["Louisville","Louisville Cardinals"],"Tennessee":["Tennessee","Tennessee Volunteers"],"Iowa":["Iowa","Iowa Hawkeyes"],"Saint Louis":["Saint Louis","St. Louis","Saint Louis Billikens"],"Villanova":["Villanova","Villanova Wildcats"],"Wisconsin":["Wisconsin","Wisconsin Badgers"],"Miami":["Miami","Miami Hurricanes","Miami (FL)"],"Georgia":["Georgia","Georgia Bulldogs"],"South Florida":["South Florida","USF","South Florida Bulls"],"McNeese":["McNeese","McNeese State","McNeese Cowboys"],"High Point":["High Point","High Point Panthers"],"VCU":["VCU","Virginia Commonwealth","VCU Rams"],"UCF":["UCF","Central Florida","UCF Knights"]};
@@ -237,7 +238,8 @@ function compute(){
       tP+=s.pts;tA+=s.ast;tR+=s.reb;
       return{...p,...s,score:s.pts+s.ast+s.reb,eliminated:el};
     });
-    return{name:o.name,totalPts:tP,totalAst:tA,totalReb:tR,totalScore:tP+tA+tR,players:pd};
+    const activeCount=pd.filter(p=>!p.eliminated).length;
+    return{name:o.name,totalPts:tP,totalAst:tA,totalReb:tR,totalScore:tP+tA+tR,players:pd,active:activeCount};
   }).sort((a,b)=>b.totalScore-a.totalScore);
 
   const all=[];
@@ -342,6 +344,30 @@ function render(){
       </svg>
     </div></div>`;
 
+  // ─── ACTIVE PLAYERS REMAINING ──────────────────────────────────────────────
+  const activeSort=[...D.owners].sort((a,b)=>b.active-a.active);
+  document.getElementById("activePlayersSection").innerHTML=`
+    <div class="sh"><div class="sh-row"><div class="sh-bar"></div><h2>Active Players Remaining</h2></div>
+    <p>Players whose teams are still alive in the tournament</p></div>
+    <div class="panel"><div class="panel-body" style="padding:16px 20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+        ${activeSort.map(o=>{
+          const pct=o.active/10*100;
+          const clr=o.active>=7?'var(--green)':o.active>=4?'var(--gold)':'var(--red)';
+          const isB=o.name==='Bradford';
+          return`<div style="background:var(--cardAlt);border:1px solid ${isB?'var(--accent)':'var(--border)'};border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+            <div style="position:absolute;bottom:0;left:0;width:${pct}%;height:3px;background:${clr};border-radius:0 3px 0 0;opacity:.6"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span class="outfit fw6 fs12" style="color:${isB?'var(--accent)':'var(--text)'}">${o.name}</span>
+              <span class="outfit fw8 fs18" style="color:${clr}">${o.active}</span>
+            </div>
+            <div style="display:flex;gap:3px">${o.players.map(p=>`<div style="width:8px;height:8px;border-radius:2px;background:${p.eliminated?'var(--border)':clr};opacity:${p.eliminated?.3:.9}"></div>`).join("")}</div>
+            <div style="font-size:10px;color:var(--textMuted);margin-top:5px">${o.active} alive · ${10-o.active} eliminated</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div></div>`;
+
   // ─── LEADERBOARD ─────────────────────────────────────────────────────────────
   const lbRows=D.owners.map((o,i)=>{
     const cls=[`trow`,i%2?'trow-alt':'',medalCls(i),expandedOwner===o.name?'trow-expanded':''].filter(Boolean).join(' ');
@@ -351,7 +377,7 @@ function render(){
         <div class="roster-hdr"><span>Rd</span><span>Player</span><span>School</span><span class="r color-pts">PTS</span><span class="r color-ast">AST</span><span class="r color-reb">REB</span><span class="r">Score</span></div>
         ${o.players.map((p,pi)=>`<div class="roster-row${p.eliminated?' elim':''}" style="animation-delay:${pi*0.03}s">
           <span class="color-muted">${p.r}</span>
-          <span class="fw5" style="color:${p.eliminated?'var(--elimText)':'var(--text)'}">${p.n}${p.eliminated?' <span class="color-red" style="font-size:9px;font-weight:700">ELIM</span>':''}</span>
+          <span class="fw5" style="color:${p.eliminated?'var(--elimText)':'var(--text)'};${p.eliminated?'text-decoration:line-through':''}"> ${p.n}${p.eliminated?' <span class="color-red" style="font-size:9px;font-weight:700;text-decoration:none;display:inline-block">ELIM</span>':''}</span>
           <span class="color-sec fs11">${p.s}</span>
           <span class="r fw5 color-pts">${p.pts}</span><span class="r fw5 color-ast">${p.ast}</span><span class="r fw5 color-reb">${p.reb}</span>
           <span class="r fw7" style="color:${p.score>0?'var(--gold)':'var(--textMuted)'}">${p.score}</span>
@@ -359,9 +385,10 @@ function render(){
       </div>`;
     }
     return`<div>
-      <div class="${cls}" style="grid-template-columns:48px 1fr 80px 80px 80px 100px" onclick="toggleOwner('${o.name}')">
+      <div class="${cls}" style="grid-template-columns:48px 1fr 60px 80px 80px 80px 100px" onclick="toggleOwner('${o.name}')">
         <span class="fs16 fw7">${medalE(i)}</span>
         <span class="outfit fw6 fs14" style="color:${o.name==='Bradford'?'var(--accent)':'var(--text)'}">${o.name}${o.name==='Bradford'?'<span class="color-gold fs11"> ★</span>':''}</span>
+        <span class="c fw7 fs13" style="color:${o.active>=7?'var(--green)':o.active>=4?'var(--gold)':'var(--red)'}">${o.active}<span style="font-weight:400;color:var(--textMuted);font-size:10px">/10</span></span>
         <span class="r fs13 color-pts">${o.totalPts}</span><span class="r fs13 color-ast">${o.totalAst}</span><span class="r fs13 color-reb">${o.totalReb}</span>
         <span class="r outfit fw7 fs18" style="color:${i===0?'var(--gold)':'var(--text)'}">${o.totalScore}</span>
       </div>${roster}
@@ -371,7 +398,7 @@ function render(){
   document.getElementById("leaderboardSection").innerHTML=`
     <div class="sh"><div class="sh-row"><div class="sh-bar"></div><h2>Owner Leaderboard</h2></div><p>Click any row to expand roster</p></div>
     <div class="panel">
-      <div class="thdr" style="grid-template-columns:48px 1fr 80px 80px 80px 100px"><span>#</span><span>Owner</span><span class="r color-pts">PTS</span><span class="r color-ast">AST</span><span class="r color-reb">REB</span><span class="r">Score</span></div>
+      <div class="thdr" style="grid-template-columns:48px 1fr 60px 80px 80px 80px 100px"><span>#</span><span>Owner</span><span class="c" style="color:var(--green)">ALIVE</span><span class="r color-pts">PTS</span><span class="r color-ast">AST</span><span class="r color-reb">REB</span><span class="r">Score</span></div>
       ${lbRows}
     </div>`;
 
@@ -391,7 +418,7 @@ function render(){
       </div>
       ${sorted.map((p,i)=>`<div class="trow tp-grid${i%2?' trow-alt':''}" style="cursor:default;opacity:${p.eliminated?.3:1};animation:fadeIn .3s ease ${i*0.02}s both">
         <span class="fw7" style="color:${i<3?'var(--gold)':'var(--textMuted)'}">${i+1}</span>
-        <span class="fw6">${p.name}</span>
+        <span class="fw6" style="${p.eliminated?'text-decoration:line-through':''}">${p.name}</span>
         <span class="color-sec fs11 hide-mobile">${p.school}</span>
         <span class="fs11" style="color:${p.owner==='Bradford'?'var(--accent)':'var(--textSec)'};font-weight:${p.owner==='Bradford'?600:400}">${p.owner}</span>
         <span class="r color-pts">${p.pts}</span><span class="r color-ast">${p.ast}</span><span class="r color-reb">${p.reb}</span>
