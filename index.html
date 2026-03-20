@@ -172,6 +172,7 @@ const SA={"Duke":["Duke","Duke Blue Devils"],"Kansas":["Kansas","Kansas Jayhawks
 const ESPN_SB="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
 const ESPN_SM="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/summary";
 const TDATES=["20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
+const PLAYIN_DATES=["20260317","20260318"];
 
 function ns(s){if(!s)return"";const lo=s.toLowerCase().replace(/[^a-z\s]/g,"").trim();for(const[k,v]of Object.entries(SA))for(const a of v)if(a.toLowerCase().replace(/[^a-z\s]/g,"").trim()===lo)return k;return s;}
 function nn(n){return n?n.toLowerCase().replace(/[^a-z\s]/g,"").replace(/\s+/g," ").trim():"";}
@@ -207,6 +208,23 @@ async function fetchAllData(){
   btn.disabled=true;btn.textContent="Loading...";
   const stats={},live=[],elim=new Set();
   const td=new Date().toISOString().slice(0,10).replace(/-/g,"");
+
+  // First: fetch play-in dates ONLY for elimination tracking (no stats)
+  for(const ds of PLAYIN_DATES){
+    if(ds>td)continue;
+    try{
+      const r=await fetch(`${ESPN_SB}?dates=${ds}&groups=100&limit=200`);if(!r.ok)continue;
+      const d=await r.json();
+      for(const ev of d?.events||[]){
+        const co=ev?.competitions?.[0];if(!co)continue;
+        if(co?.status?.type?.name==="STATUS_FINAL"){
+          for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
+        }
+      }
+    }catch(e){}
+  }
+
+  // Then: fetch tournament dates for scoring + eliminations
   const dates=TDATES.filter(d=>d<=td);if(!dates.length)dates.push(td);
   
   for(const ds of dates){
