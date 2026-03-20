@@ -171,11 +171,33 @@ const SA={"Duke":["Duke","Duke Blue Devils"],"Kansas":["Kansas","Kansas Jayhawks
 
 const ESPN_SB="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
 const ESPN_SM="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/summary";
-const TDATES=["20260317","20260318","20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
+const TDATES=["20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
 
 function ns(s){if(!s)return"";const lo=s.toLowerCase().replace(/[^a-z\s]/g,"").trim();for(const[k,v]of Object.entries(SA))for(const a of v)if(a.toLowerCase().replace(/[^a-z\s]/g,"").trim()===lo)return k;return s;}
 function nn(n){return n?n.toLowerCase().replace(/[^a-z\s]/g,"").replace(/\s+/g," ").trim():"";}
-function pm(en2,dp){const en=nn(en2),dn=nn(dp.n);if(en===dn||en.includes(dn)||dn.includes(en))return true;const eL=en.split(" ").pop(),dL=dn.split(" ").pop();if(eL===dL&&eL.length>2)return true;if(dp.a)for(const alt of dp.a){const an=nn(alt);if(en===an||en.includes(an)||an.includes(en))return true;if(eL===an.split(" ").pop()&&an.split(" ").pop().length>2)return true;}return false;}
+function pm(en2,dp){
+  const en=nn(en2),dn=nn(dp.n);
+  // Exact full name match
+  if(en===dn)return true;
+  // Full name contains (e.g. "Darius Acuff Jr" contains "Darius Acuff")
+  if(en.length>4&&dn.length>4&&(en.includes(dn)||dn.includes(en)))return true;
+  // First AND last name match (split both, compare first and last tokens)
+  const eP=en.split(" "),dP=dn.split(" ");
+  const eFirst=eP[0],eLast=eP[eP.length-1],dFirst=dP[0],dLast=dP[dP.length-1];
+  if(eLast===dLast&&eLast.length>2&&eFirst===dFirst&&eFirst.length>1)return true;
+  // Last name only match — ONLY if the draft name is a single word (last name only draft pick)
+  if(dP.length===1&&eLast===dLast&&eLast.length>3)return true;
+  // Check alt names with same strict logic
+  if(dp.a)for(const alt of dp.a){
+    const an=nn(alt);
+    if(en===an)return true;
+    if(en.length>4&&an.length>4&&(en.includes(an)||an.includes(en)))return true;
+    const aP=an.split(" "),aFirst=aP[0],aLast=aP[aP.length-1];
+    if(eLast===aLast&&eLast.length>2&&eFirst===aFirst&&eFirst.length>1)return true;
+    if(aP.length===1&&eLast===aLast&&aLast.length>3)return true;
+  }
+  return false;
+}
 
 let playerStats={},liveGames=[],eliminatedSchools=new Set(),expandedOwner=null,sortCol="score",sortDir="desc";
 
