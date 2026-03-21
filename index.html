@@ -156,7 +156,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 const OWNERS=[
 {name:"Hillz",players:[{n:"Cameron Boozer",s:"Duke",r:1,a:["Cam Boozer"]},{n:"Tre White",s:"Kansas",r:2},{n:"Motiejus Krivas",s:"Arizona",r:3,a:["Krivas"]},{n:"Trey McKenney",s:"Michigan",r:4,a:["Trey McKinney"]},{n:"Urban Klavzar",s:"Florida",r:5},{n:"Tobe Awaka",s:"Arizona",r:6},{n:"Nimari Burnett",s:"Michigan",r:7},{n:"C.J. Cox",s:"Purdue",r:8,a:["CJ Cox"]},{n:"Acaden Lewis",s:"Villanova",r:9},{n:"Robbie Avila",s:"Saint Louis",r:10,a:["Cream Avila"]}]},
 {name:"Turner",players:[{n:"Darius Acuff Jr.",s:"Arkansas",r:1,a:["Acuff","Darius Acuff"]},{n:"Braden Smith",s:"Purdue",r:2,a:["Smith"]},{n:"Boogie Fland",s:"Florida",r:3},{n:"Braylon Mullins",s:"UConn",r:4,a:["Mullens"]},{n:"Kylan Boswell",s:"Illinois",r:5,a:["Boswell"]},{n:"Christian Anderson",s:"Texas Tech",r:6,a:["Anderson"]},{n:"Latrell Wrightsell",s:"Alabama",r:7,a:["Wrightsell","Latrell Wrightsell Jr."]},{n:"Tyler Nickel",s:"Vanderbilt",r:8,a:["Nickel"]},{n:"Dominique Daniels Jr.",s:"Cal Baptist",r:9,a:["Daniels","Dominique Daniels"]},{n:"Jaron Pierre Jr.",s:"SMU",r:10,a:["Pierre","Jaron Pierre"]}]},
-{name:"Bradford",players:[{n:"Brayden Burries",s:"Arizona",r:1,a:["Burries"]},{n:"Cayden Boozer",s:"Duke",r:2},{n:"Aday Mara",s:"Michigan",r:3,a:["Mara"]},{n:"Reuben Chinyelu",s:"Florida",r:4,a:["Chinyelu"]},{n:"Tyler Tanner",s:"Vanderbilt",r:5,a:["Tanner"]},{n:"Malik Thomas",s:"Virginia",r:6,a:["Thomas"]},{n:"Otega Oweh",s:"Kentucky",r:7,a:["Oweh"]},{n:"Chance Mallory",s:"Virginia",r:8,a:["Mallory"]},{n:"Boopie Miller",s:"SMU",r:9,a:["Miller"]},{n:"Terrence Hill Jr.",s:"VCU",r:10,a:["Hill Jr","Terrence Hill"]}]},
+{name:"Bradford",players:[{n:"Brayden Burries",s:"Arizona",r:1,a:["Burries"]},{n:"Cayden Boozer",s:"Duke",r:2},{n:"Aday Mara",s:"Michigan",r:3,a:["Mara"]},{n:"Reuben Chinyelu",s:"Florida",r:4,a:["Chinyelu","Rueben Chinyelu"]},{n:"Tyler Tanner",s:"Vanderbilt",r:5,a:["Tanner"]},{n:"Malik Thomas",s:"Virginia",r:6,a:["Thomas"]},{n:"Otega Oweh",s:"Kentucky",r:7,a:["Oweh"]},{n:"Chance Mallory",s:"Virginia",r:8,a:["Mallory"]},{n:"Boopie Miller",s:"SMU",r:9,a:["Miller"]},{n:"Terrence Hill Jr.",s:"VCU",r:10,a:["Hill Jr","Terrence Hill"]}]},
 {name:"Berto",players:[{n:"Isaiah Evans",s:"Duke",r:1,a:["Isiah Evans"]},{n:"Ja'Kobi Gillespie",s:"Tennessee",r:2,a:["Gillispie","Gillespie"]},{n:"Nate Ament",s:"Tennessee",r:3},{n:"Trey Kaufman-Renn",s:"Purdue",r:4,a:["Kaufman Renn","Kaufman-Renn"]},{n:"Pryce Sandfort",s:"Nebraska",r:5,a:["Sandfort"]},{n:"Trevon Brazile",s:"Arkansas",r:6,a:["Brazile"]},{n:"Bryce Hopkins",s:"St. John's",r:7},{n:"Dailyn Swain",s:"Texas",r:8,a:["Swain"]},{n:"Tavari Johnson",s:"Akron",r:9},{n:"Jordan Pope",s:"Texas",r:10}]},
 {name:"Sam",players:[{n:"Jaden Bradley",s:"Arizona",r:1,a:["Bradley"]},{n:"Darryn Peterson",s:"Kansas",r:2,a:["Peterson"]},{n:"Anthony Dell'Orso",s:"Arizona",r:3,a:["Dell Orso"]},{n:"Solo Ball",s:"UConn",r:4},{n:"J'den Cenac",s:"Houston",r:5,a:["Cenac"]},{n:"Andrew Mast",s:"Nebraska",r:6,a:["Mast"]},{n:"Melvin Council Jr.",s:"Kansas",r:7,a:["Council","Melvin Council"]},{n:"Robert Wright III",s:"BYU",r:8,a:["Rob Wright","Robert Wright"]},{n:"Mason Falslev",s:"Utah State",r:9,a:["Falslev"]},{n:"Jayden Stone",s:"Missouri",r:10,a:["Stone"]}]},
 {name:"Gosh",players:[{n:"Thomas Haugh",s:"Florida",r:1,a:["Haugh"]},{n:"Koa Peat",s:"Arizona",r:2,a:["Peat"]},{n:"Xaivian Lee",s:"Florida",r:3},{n:"Milos Uzan",s:"Houston",r:4,a:["Uzan"]},{n:"Nikola Mirkovic",s:"Illinois",r:5,a:["Mirkovic"]},{n:"Tomislav Ivisic",s:"Illinois",r:6,a:["T. Ivisic"]},{n:"Tyon Grant-Foster",s:"Gonzaga",r:7,a:["Grant-Foster"]},{n:"Oziyah Sellers",s:"St. John's",r:8,a:["Sellers"]},{n:"MJ Collins Jr.",s:"Utah State",r:9,a:["Collins Jr.","Collin's Jr."]},{n:"John Mobley Jr.",s:"Ohio State",r:10,a:["Mobley Jr.","John Mobley"]}]},
@@ -210,72 +210,69 @@ async function fetchAllData(){
   const btn=document.getElementById("refreshBtn");
   btn.disabled=true;btn.textContent="Loading...";
   const stats={},live=[],elim=new Set();
-  const td=new Date().toISOString().slice(0,10).replace(/-/g,"");
 
-  // ── NEW APPROACH: Fetch each team's schedule to find tournament game IDs ──
-  // The scoreboard endpoint does NOT return postseason games (calendar ends at regular season).
-  // Instead, we fetch each team's schedule which includes tournament games.
-  btn.textContent="Finding tournament games...";
-  const seenEvents=new Set();
+  // ── SCOREBOARD APPROACH: seasontype=3 returns NCAA Tournament games by date ──
+  const SB="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
   const tournamentEventIds=new Set();
+  const seenEvents=new Set();
 
-  // Step 1: Get unique team IDs from all drafted players
-  const uniqueSchools=new Set();
-  for(const o of OWNERS)for(const p of o.players)uniqueSchools.add(p.s);
-  const teamIds=[...uniqueSchools].map(s=>TEAM_IDS[s]).filter(Boolean);
-  const uniqueTeamIds=[...new Set(teamIds)];
+  // Step 1: Fetch scoreboard for each tournament date (March 17 onward through today+1)
+  // Play-in: March 17-18, Round 1: March 19-22, Round 2: March 23-24, etc.
+  const today=new Date();
+  const endDate=new Date(today);endDate.setDate(endDate.getDate()+1);
+  const dates=[];
+  const startD=new Date(2026,2,17); // March 17
+  for(let d=new Date(startD);d<=endDate;d.setDate(d.getDate()+1)){
+    dates.push(d.toISOString().slice(0,10).replace(/-/g,""));
+  }
 
-  // Step 2: Fetch each team's schedule to find postseason game IDs
-  let schedCount=0;
-  for(const tid of uniqueTeamIds){
-    schedCount++;
-    btn.textContent=`Scanning team ${schedCount}/${uniqueTeamIds.length}...`;
+  btn.textContent=`Scanning ${dates.length} tournament dates...`;
+  for(let i=0;i<dates.length;i++){
+    const dt=dates[i];
+    const isPlayIn=dt==='20260317'||dt==='20260318';
+    btn.textContent=`Scanning ${dt} (${i+1}/${dates.length})...`;
     try{
-      const r=await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/${tid}/schedule`);
+      const r=await fetch(`${SB}?dates=${dt}&seasontype=3&groups=100`);
       if(!r.ok)continue;
       const d=await r.json();
       for(const ev of d?.events||[]){
-        // Only include postseason games (season type 3) from March 19 onward
-        const evDate=ev.date?.slice(0,10)?.replace(/-/g,'')||'';
-        const isPostseason=ev.seasonType?.type===3||ev.season?.type===3||(evDate>='20260317');
-        const isPlayIn=evDate==='20260317'||evDate==='20260318';
-        if(isPostseason&&evDate>='20260317'){
-          // For play-in games, only track eliminations
-          if(isPlayIn){
-            const co=ev.competitions?.[0];
-            if(co?.status?.type?.name==="STATUS_FINAL"){
-              for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
-            }
-          } else {
-            tournamentEventIds.add(ev.id);
-            // Also check for live games and eliminations from the schedule data
-            const co=ev.competitions?.[0];
-            if(co){
-              const st=co.status?.type?.name;
-              if(st==="STATUS_IN_PROGRESS"&&!seenEvents.has(ev.id+'_live')){
-                seenEvents.add(ev.id+'_live');
-                live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName||ev.name});
-              }
-              if(st==="STATUS_FINAL"){
-                for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
-              }
-            }
+        const co=ev.competitions?.[0];if(!co)continue;
+        const st=co.status?.type?.name;
+        // Track eliminations from all games
+        if(st==="STATUS_FINAL"){
+          for(const c of co.competitors||[])if(c.winner===false){
+            const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);
           }
         }
+        // Track live games
+        if(st==="STATUS_IN_PROGRESS"&&!seenEvents.has(ev.id+'_live')){
+          seenEvents.add(ev.id+'_live');
+          live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score?.displayValue||c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName||ev.name});
+        }
+        // Collect event IDs for box score fetching (skip play-in for stats)
+        if(!isPlayIn && st==="STATUS_FINAL"){
+          tournamentEventIds.add(ev.id);
+        }
+        // Also include in-progress games for live stats
+        if(!isPlayIn && st==="STATUS_IN_PROGRESS"){
+          tournamentEventIds.add(ev.id);
+        }
       }
-    }catch(e){}
+    }catch(e){console.log(`Scoreboard fetch error for ${dt}:`,e);}
   }
 
-  // Step 3: Fetch box scores for each tournament game
+  // Step 2: Fetch box scores for each tournament game
   const eventList=[...tournamentEventIds];
+  console.log(`Tournament event IDs found: ${eventList.length}`, eventList);
   let boxCount=0;
   for(const eid of eventList){
-    if(seenEvents.has(eid))continue;seenEvents.add(eid);
     boxCount++;
     btn.textContent=`Loading box scores ${boxCount}/${eventList.length}...`;
     try{
-      const sr=await fetch(`${ESPN_SM}?event=${eid}`);if(!sr.ok)continue;
-      const sd=await sr.json();if(!sd?.boxscore?.players)continue;
+      const sr=await fetch(`${ESPN_SM}?event=${eid}`);
+      if(!sr.ok){console.log(`Box score fetch failed for ${eid}: ${sr.status}`);continue;}
+      const sd=await sr.json();
+      if(!sd?.boxscore?.players){console.log(`No boxscore.players for ${eid}`);continue;}
       for(const tb of sd.boxscore.players){
         const tn=ns(tb?.team?.displayName||tb?.team?.name||"");
         for(const sg of tb?.statistics||[]){
@@ -292,7 +289,7 @@ async function fetchAllData(){
           }
         }
       }
-    }catch(e){}
+    }catch(e){console.log(`Error fetching box score ${eid}:`,e);}
   }
 
   playerStats=stats;liveGames=live;eliminatedSchools=elim;
