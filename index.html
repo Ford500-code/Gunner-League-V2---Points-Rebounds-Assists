@@ -237,9 +237,9 @@ async function fetchAllData(){
     try{
       // Fetch with multiple approaches to catch all tournament games
       const urls=[
-        `${ESPN_SB}?dates=${ds}&groups=100&limit=200`,
+        `${ESPN_SB}?dates=${ds}&limit=200`,
         `${ESPN_SB}?dates=${ds}&seasontype=3&limit=200`,
-        `${ESPN_SB}?dates=${ds}&limit=200`
+        `${ESPN_SB}?dates=${ds}&groups=100&limit=200`
       ];
       const seenEvents=new Set();
       for(const url of urls){
