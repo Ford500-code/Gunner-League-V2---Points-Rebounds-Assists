@@ -142,7 +142,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 <div class="wrap">
   <div class="cards" id="summaryCards"></div>
-  <div id="debugPanel"></div>
   <div id="liveGamesSection"></div>
   <div class="mb36" id="chartSection"></div>
   <div class="mb36" id="activePlayersSection"></div>
@@ -211,67 +210,52 @@ async function fetchAllData(){
   const btn=document.getElementById("refreshBtn");
   btn.disabled=true;btn.textContent="Loading...";
   const stats={},live=[],elim=new Set();
-  const debugLog=[];
-  function dbg(msg){debugLog.push(msg);console.log(msg);}
 
-  // ── SCOREBOARD APPROACH: seasontype=3 returns NCAA Tournament games by date ──
   const SB="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard";
   const tournamentEventIds=new Set();
   const seenEvents=new Set();
 
-  // Step 1: Build date list (hardcoded YYYYMMDD to avoid timezone issues)
+  // Step 1: Scan each tournament date (hardcoded to avoid timezone issues)
   const dates=["20260317","20260318","20260319","20260320","20260321","20260322","20260323","20260324","20260325","20260326","20260327","20260328","20260329","20260330","20260331","20260401","20260402","20260403","20260404","20260405","20260406","20260407"];
 
-  dbg(`Scanning ${dates.length} dates...`);
-  let totalScoreboardGames=0;
   for(let i=0;i<dates.length;i++){
     const dt=dates[i];
     const isPlayIn=dt==='20260317'||dt==='20260318';
     btn.textContent=`Scanning ${dt} (${i+1}/${dates.length})...`;
     try{
-      const url=`${SB}?dates=${dt}&seasontype=3`;
-      const r=await fetch(url);
-      if(!r.ok){dbg(`FAIL ${dt}: HTTP ${r.status}`);continue;}
+      const r=await fetch(`${SB}?dates=${dt}&seasontype=3`);
+      if(!r.ok)continue;
       const d=await r.json();
-      const evCount=d?.events?.length||0;
-      if(evCount>0)dbg(`${dt}: ${evCount} games`);
-      totalScoreboardGames+=evCount;
       for(const ev of d?.events||[]){
         const co=ev.competitions?.[0];if(!co)continue;
         const st=co.status?.type?.name;
-        // Track eliminations from all finished games
         if(st==="STATUS_FINAL"){
           for(const c of co.competitors||[])if(c.winner===false){
             const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);
           }
         }
-        // Track live games
         if(st==="STATUS_IN_PROGRESS"&&!seenEvents.has(ev.id+'_live')){
           seenEvents.add(ev.id+'_live');
           live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score?.displayValue||c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName||ev.name});
         }
-        // Collect event IDs for box score fetching (skip play-in for stats, but track eliminations)
         if(!isPlayIn && (st==="STATUS_FINAL"||st==="STATUS_IN_PROGRESS")){
           tournamentEventIds.add(ev.id);
         }
       }
-    }catch(e){dbg(`ERROR ${dt}: ${e.message}`);}
+    }catch(e){}
   }
 
-  dbg(`Scoreboard total: ${totalScoreboardGames} games, ${tournamentEventIds.size} need box scores`);
-
-  // Step 2: Fetch box scores for each tournament game
+  // Step 2: Fetch box scores
   const eventList=[...tournamentEventIds];
-  let boxCount=0,boxSuccess=0,matchCount=0;
+  let boxCount=0;
   for(const eid of eventList){
     boxCount++;
     btn.textContent=`Box scores ${boxCount}/${eventList.length}...`;
     try{
       const sr=await fetch(`${ESPN_SM}?event=${eid}`);
-      if(!sr.ok){dbg(`Box ${eid}: HTTP ${sr.status}`);continue;}
+      if(!sr.ok)continue;
       const sd=await sr.json();
-      if(!sd?.boxscore?.players){dbg(`Box ${eid}: no boxscore.players (keys: ${Object.keys(sd?.boxscore||{}).join(',')})`);continue;}
-      boxSuccess++;
+      if(!sd?.boxscore?.players)continue;
       for(const tb of sd.boxscore.players){
         const tn=ns(tb?.team?.displayName||tb?.team?.name||"");
         for(const sg of tb?.statistics||[]){
@@ -283,27 +267,17 @@ async function fetchAllData(){
               if(ns(pl.s)!==tn)continue;if(!pm(en,pl))continue;
               const k=`${ow.name}|${pl.n}`;
               if(!stats[k])stats[k]={pts:0,ast:0,reb:0,gm:0,gids:new Set()};
-              if(!stats[k].gids.has(eid)){stats[k].gids.add(eid);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;matchCount++;}
+              if(!stats[k].gids.has(eid)){stats[k].gids.add(eid);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;}
             }
           }
         }
       }
-    }catch(e){dbg(`Box ${eid} error: ${e.message}`);}
+    }catch(e){}
   }
-
-  dbg(`Box scores: ${boxSuccess}/${eventList.length} loaded, ${matchCount} player matches`);
-  dbg(`Eliminated: ${[...elim].join(', ')||'none'}`);
-
-  // Show debug on page
-  const debugEl=document.getElementById("debugPanel");
-  if(debugEl)debugEl.innerHTML=`<div style="background:#0a0e18;border:1px solid #1e3a5f;border-radius:8px;padding:12px;margin:12px 0;font-size:10px;color:#7e92b5;max-height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace">
-    <div style="color:#f97316;font-weight:700;margin-bottom:4px">DEBUG LOG (remove after fixing)</div>
-    ${debugLog.map(l=>`<div>${l}</div>`).join("")}
-  </div>`;
 
   playerStats=stats;liveGames=live;eliminatedSchools=elim;
   document.getElementById("syncDot").style.opacity="1";
-  document.getElementById("syncText").textContent=`Synced ${new Date().toLocaleTimeString()} · ${eventList.length} games · ${matchCount} matches`;
+  document.getElementById("syncText").textContent=`Synced ${new Date().toLocaleTimeString()} · ${eventList.length} games found`;
   btn.disabled=false;btn.textContent="↻ REFRESH";
   render();
 }
