@@ -230,9 +230,17 @@ async function fetchAllData(){
   }
 
   // Then: fetch tournament dates for scoring + eliminations
-  const dates=TDATES.filter(d=>d<=td);if(!dates.length)dates.push(td);
+  // Also fetch day+1 for each date to catch late-night games (ESPN uses UTC dates)
+  const baseDates=TDATES.filter(d=>d<=td);if(!baseDates.length)baseDates.push(td);
+  const dates=new Set(baseDates);
+  baseDates.forEach(d=>{
+    const dt=new Date(d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8)+'T12:00:00Z');
+    dt.setDate(dt.getDate()+1);
+    const next=dt.toISOString().slice(0,10).replace(/-/g,'');
+    if(next<=td)dates.add(next);
+  });
   
-  for(const ds of dates){
+  for(const ds of [...dates].sort()){
     btn.textContent=`${ds.slice(4,6)}/${ds.slice(6,8)}...`;
     try{
       // Fetch with multiple approaches to catch all tournament games
