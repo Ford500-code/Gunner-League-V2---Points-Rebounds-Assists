@@ -174,6 +174,9 @@ const ESPN_SM="https://site.api.espn.com/apis/site/v2/sports/basketball/mens-col
 const TDATES=["20260319","20260320","20260321","20260322","20260326","20260327","20260328","20260329","20260404","20260406"];
 const PLAYIN_DATES=["20260317","20260318"];
 
+// ESPN team IDs for all schools in the league
+const TEAM_IDS={"Duke":150,"Kansas":2305,"Arizona":12,"Michigan":130,"Florida":57,"Purdue":2509,"Arkansas":8,"Illinois":356,"UConn":41,"Texas Tech":2641,"Alabama":333,"Vanderbilt":238,"Cal Baptist":2856,"SMU":2567,"St. John's":2599,"Texas":251,"Akron":2006,"Iowa State":66,"Nebraska":158,"Houston":248,"BYU":252,"Utah State":328,"Missouri":142,"Ohio State":194,"Virginia":258,"Gonzaga":2250,"Kentucky":96,"Michigan State":127,"Louisville":97,"Tennessee":2633,"Iowa":2294,"Saint Louis":139,"Villanova":2918,"Wisconsin":275,"Miami":2390,"Georgia":61,"South Florida":58,"McNeese":2377,"High Point":2314,"VCU":2670,"UCF":2116,"North Carolina":153};
+
 function ns(s){if(!s)return"";const lo=s.toLowerCase().replace(/[^a-z\s]/g,"").trim();for(const[k,v]of Object.entries(SA))for(const a of v)if(a.toLowerCase().replace(/[^a-z\s]/g,"").trim()===lo)return k;return s;}
 function nn(n){return n?n.toLowerCase().replace(/[^a-z\s]/g,"").replace(/\s+/g," ").trim():"";}
 function pm(en2,dp){
@@ -209,58 +212,70 @@ async function fetchAllData(){
   const stats={},live=[],elim=new Set();
   const td=new Date().toISOString().slice(0,10).replace(/-/g,"");
 
-  // First: fetch play-in dates ONLY for elimination tracking (no stats)
-  for(const ds of PLAYIN_DATES){
-    if(ds>td)continue;
+  // ── NEW APPROACH: Fetch each team's schedule to find tournament game IDs ──
+  // The scoreboard endpoint does NOT return postseason games (calendar ends at regular season).
+  // Instead, we fetch each team's schedule which includes tournament games.
+  btn.textContent="Finding tournament games...";
+  const seenEvents=new Set();
+  const tournamentEventIds=new Set();
+
+  // Step 1: Get unique team IDs from all drafted players
+  const uniqueSchools=new Set();
+  for(const o of OWNERS)for(const p of o.players)uniqueSchools.add(p.s);
+  const teamIds=[...uniqueSchools].map(s=>TEAM_IDS[s]).filter(Boolean);
+  const uniqueTeamIds=[...new Set(teamIds)];
+
+  // Step 2: Fetch each team's schedule to find postseason game IDs
+  let schedCount=0;
+  for(const tid of uniqueTeamIds){
+    schedCount++;
+    btn.textContent=`Scanning team ${schedCount}/${uniqueTeamIds.length}...`;
     try{
-      const urls=[`${ESPN_SB}?dates=${ds}&groups=100&limit=200`,`${ESPN_SB}?dates=${ds}&seasontype=3&limit=200`,`${ESPN_SB}?dates=${ds}&limit=200`];
-      for(const url of urls){
-        try{
-          const r=await fetch(url);if(!r.ok)continue;
-          const d=await r.json();
-          for(const ev of d?.events||[]){
-            const co=ev?.competitions?.[0];if(!co)continue;
+      const r=await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams/${tid}/schedule`);
+      if(!r.ok)continue;
+      const d=await r.json();
+      for(const ev of d?.events||[]){
+        // Only include postseason games (season type 3) from March 19 onward
+        const evDate=ev.date?.slice(0,10)?.replace(/-/g,'')||'';
+        const isPostseason=ev.seasonType?.type===3||ev.season?.type===3||(evDate>='20260317');
+        const isPlayIn=evDate==='20260317'||evDate==='20260318';
+        if(isPostseason&&evDate>='20260317'){
+          // For play-in games, only track eliminations
+          if(isPlayIn){
+            const co=ev.competitions?.[0];
             if(co?.status?.type?.name==="STATUS_FINAL"){
               for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
             }
+          } else {
+            tournamentEventIds.add(ev.id);
+            // Also check for live games and eliminations from the schedule data
+            const co=ev.competitions?.[0];
+            if(co){
+              const st=co.status?.type?.name;
+              if(st==="STATUS_IN_PROGRESS"&&!seenEvents.has(ev.id+'_live')){
+                seenEvents.add(ev.id+'_live');
+                live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName||ev.name});
+              }
+              if(st==="STATUS_FINAL"){
+                for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
+              }
+            }
           }
-        }catch(e){}
+        }
       }
     }catch(e){}
   }
 
-  // Fetch ALL tournament games — use date range with groups=50 (all D1 incl postseason)
-  // Plus individual date queries as fallback, with day+1 for UTC timezone shifts
-  btn.textContent="Fetching tournament games...";
-  const seenEvents=new Set();
-  const fetchUrls=[];
-  // Primary: date range query with groups=50
-  fetchUrls.push(`${ESPN_SB}?dates=20260319-${td}&groups=50&limit=400`);
-  fetchUrls.push(`${ESPN_SB}?dates=20260319-${td}&limit=400`);
-  // Fallback: individual dates + day after each
-  const baseDates=TDATES.filter(d=>d<=td);
-  const allDates=new Set(baseDates);
-  baseDates.forEach(d=>{
-    const dt=new Date(d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8)+'T12:00:00Z');
-    dt.setDate(dt.getDate()+1);
-    const next=dt.toISOString().slice(0,10).replace(/-/g,'');
-    if(next<=td)allDates.add(next);
-  });
-  for(const ds of allDates){
-    fetchUrls.push(`${ESPN_SB}?dates=${ds}&groups=50&limit=200`);
-    fetchUrls.push(`${ESPN_SB}?dates=${ds}&limit=200`);
-  }
-
-  async function processEvent(ev){
-    if(seenEvents.has(ev.id))return;seenEvents.add(ev.id);
-    const co=ev?.competitions?.[0];if(!co)return;
-    const st=co?.status?.type?.name;
-    if(st==="STATUS_IN_PROGRESS")live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName});
-    if(st!=="STATUS_FINAL"&&st!=="STATUS_IN_PROGRESS")return;
+  // Step 3: Fetch box scores for each tournament game
+  const eventList=[...tournamentEventIds];
+  let boxCount=0;
+  for(const eid of eventList){
+    if(seenEvents.has(eid))continue;seenEvents.add(eid);
+    boxCount++;
+    btn.textContent=`Loading box scores ${boxCount}/${eventList.length}...`;
     try{
-      const sr=await fetch(`${ESPN_SM}?event=${ev.id}`);if(!sr.ok)return;
-      const sd=await sr.json();if(!sd?.boxscore?.players)return;
-      if(st==="STATUS_FINAL")for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
+      const sr=await fetch(`${ESPN_SM}?event=${eid}`);if(!sr.ok)continue;
+      const sd=await sr.json();if(!sd?.boxscore?.players)continue;
       for(const tb of sd.boxscore.players){
         const tn=ns(tb?.team?.displayName||tb?.team?.name||"");
         for(const sg of tb?.statistics||[]){
@@ -272,7 +287,7 @@ async function fetchAllData(){
               if(ns(pl.s)!==tn)continue;if(!pm(en,pl))continue;
               const k=`${ow.name}|${pl.n}`;
               if(!stats[k])stats[k]={pts:0,ast:0,reb:0,gm:0,gids:new Set()};
-              if(!stats[k].gids.has(ev.id)){stats[k].gids.add(ev.id);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;}
+              if(!stats[k].gids.has(eid)){stats[k].gids.add(eid);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;}
             }
           }
         }
@@ -280,16 +295,9 @@ async function fetchAllData(){
     }catch(e){}
   }
 
-  for(const url of fetchUrls){
-    try{
-      const r=await fetch(url);if(!r.ok)continue;
-      const d=await r.json();
-      for(const ev of d?.events||[])await processEvent(ev);
-    }catch(e){}
-  }
   playerStats=stats;liveGames=live;eliminatedSchools=elim;
   document.getElementById("syncDot").style.opacity="1";
-  document.getElementById("syncText").textContent=`Synced ${new Date().toLocaleTimeString()}`;
+  document.getElementById("syncText").textContent=`Synced ${new Date().toLocaleTimeString()} · ${eventList.length} games found`;
   btn.disabled=false;btn.textContent="↻ REFRESH";
   render();
 }
