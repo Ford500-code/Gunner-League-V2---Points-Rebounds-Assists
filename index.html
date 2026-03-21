@@ -213,13 +213,18 @@ async function fetchAllData(){
   for(const ds of PLAYIN_DATES){
     if(ds>td)continue;
     try{
-      const r=await fetch(`${ESPN_SB}?dates=${ds}&groups=100&limit=200`);if(!r.ok)continue;
-      const d=await r.json();
-      for(const ev of d?.events||[]){
-        const co=ev?.competitions?.[0];if(!co)continue;
-        if(co?.status?.type?.name==="STATUS_FINAL"){
-          for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
-        }
+      const urls=[`${ESPN_SB}?dates=${ds}&groups=100&limit=200`,`${ESPN_SB}?dates=${ds}&seasontype=3&limit=200`,`${ESPN_SB}?dates=${ds}&limit=200`];
+      for(const url of urls){
+        try{
+          const r=await fetch(url);if(!r.ok)continue;
+          const d=await r.json();
+          for(const ev of d?.events||[]){
+            const co=ev?.competitions?.[0];if(!co)continue;
+            if(co?.status?.type?.name==="STATUS_FINAL"){
+              for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
+            }
+          }
+        }catch(e){}
       }
     }catch(e){}
   }
@@ -230,32 +235,44 @@ async function fetchAllData(){
   for(const ds of dates){
     btn.textContent=`${ds.slice(4,6)}/${ds.slice(6,8)}...`;
     try{
-      const r=await fetch(`${ESPN_SB}?dates=${ds}&groups=100&limit=200`);if(!r.ok)continue;
-      const d=await r.json();
-      for(const ev of d?.events||[]){
-        const co=ev?.competitions?.[0];if(!co)continue;
-        const st=co?.status?.type?.name;
-        if(st==="STATUS_IN_PROGRESS")live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName});
-        if(st!=="STATUS_FINAL"&&st!=="STATUS_IN_PROGRESS")continue;
+      // Fetch with multiple approaches to catch all tournament games
+      const urls=[
+        `${ESPN_SB}?dates=${ds}&groups=100&limit=200`,
+        `${ESPN_SB}?dates=${ds}&seasontype=3&limit=200`,
+        `${ESPN_SB}?dates=${ds}&limit=200`
+      ];
+      const seenEvents=new Set();
+      for(const url of urls){
         try{
-          const sr=await fetch(`${ESPN_SM}?event=${ev.id}`);if(!sr.ok)continue;
-          const sd=await sr.json();if(!sd?.boxscore?.players)continue;
-          if(st==="STATUS_FINAL")for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
-          for(const tb of sd.boxscore.players){
-            const tn=ns(tb?.team?.displayName||tb?.team?.name||"");
-            for(const sg of tb?.statistics||[]){
-              const lb=sg?.labels||[];const pi2=lb.indexOf("PTS"),ai=lb.indexOf("AST"),ri=lb.indexOf("REB");
-              for(const ath of sg?.athletes||[]){
-                const en=ath?.athlete?.displayName||"";const as2=ath?.stats||[];
-                const pts=pi2>=0?parseInt(as2[pi2])||0:0,ast=ai>=0?parseInt(as2[ai])||0:0,reb=ri>=0?parseInt(as2[ri])||0:0;
-                for(const ow of OWNERS)for(const pl of ow.players){
-                  if(ns(pl.s)!==tn)continue;if(!pm(en,pl))continue;
-                  const k=`${ow.name}|${pl.n}`;
-                  if(!stats[k])stats[k]={pts:0,ast:0,reb:0,gm:0,gids:new Set()};
-                  if(!stats[k].gids.has(ev.id)){stats[k].gids.add(ev.id);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;}
+          const r=await fetch(url);if(!r.ok)continue;
+          const d=await r.json();
+          for(const ev of d?.events||[]){
+            if(seenEvents.has(ev.id))continue;seenEvents.add(ev.id);
+            const co=ev?.competitions?.[0];if(!co)continue;
+            const st=co?.status?.type?.name;
+            if(st==="STATUS_IN_PROGRESS")live.push({teams:co.competitors?.map(c=>({name:c.team?.displayName||c.team?.name,score:c.score})),clock:co.status?.displayClock,period:co.status?.period,name:ev.shortName});
+            if(st!=="STATUS_FINAL"&&st!=="STATUS_IN_PROGRESS")continue;
+            try{
+              const sr=await fetch(`${ESPN_SM}?event=${ev.id}`);if(!sr.ok)continue;
+              const sd=await sr.json();if(!sd?.boxscore?.players)continue;
+              if(st==="STATUS_FINAL")for(const c of co.competitors||[])if(c.winner===false){const n2=ns(c.team?.displayName||c.team?.name||"");if(n2)elim.add(n2);}
+              for(const tb of sd.boxscore.players){
+                const tn=ns(tb?.team?.displayName||tb?.team?.name||"");
+                for(const sg of tb?.statistics||[]){
+                  const lb=sg?.labels||[];const pi2=lb.indexOf("PTS"),ai=lb.indexOf("AST"),ri=lb.indexOf("REB");
+                  for(const ath of sg?.athletes||[]){
+                    const en=ath?.athlete?.displayName||"";const as2=ath?.stats||[];
+                    const pts=pi2>=0?parseInt(as2[pi2])||0:0,ast=ai>=0?parseInt(as2[ai])||0:0,reb=ri>=0?parseInt(as2[ri])||0:0;
+                    for(const ow of OWNERS)for(const pl of ow.players){
+                      if(ns(pl.s)!==tn)continue;if(!pm(en,pl))continue;
+                      const k=`${ow.name}|${pl.n}`;
+                      if(!stats[k])stats[k]={pts:0,ast:0,reb:0,gm:0,gids:new Set()};
+                      if(!stats[k].gids.has(ev.id)){stats[k].gids.add(ev.id);stats[k].pts+=pts;stats[k].ast+=ast;stats[k].reb+=reb;stats[k].gm++;}
+                    }
+                  }
                 }
               }
-            }
+            }catch(e){}
           }
         }catch(e){}
       }
